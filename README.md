@@ -1,4 +1,4 @@
-# Kirin Voxel Bridge 0.2.1, tahap 2 (Fabric 1.21.11, klien saja)
+# Kirin Voxel Bridge 0.2.2, tahap 2 (Fabric 1.21.11, klien saja)
 
 BELUM DIKOMPILASI atau DIJALANKAN oleh penulisnya (tidak ada JDK/Gradle/Minecraft/GPU di lingkungan pembuatan). Bila ada error, kirim teksnya apa adanya.
 
@@ -51,3 +51,7 @@ Sama seperti tahap 1: buat proyek dari https://fabricmc.net/develop/template (1.
 - `/kirinvx bridge find`: pindai SINKRON sekarang dan cetak ringkasan (jumlah tekstur, id tertinggi, tekstur berukuran mirip).
 - `/kirinvx bridge test`: uji mandiri sisi mod tanpa Iris (buat tekstur sendiri, unggah, baca balik, cek header dan isi unit).
 - `/kirinvx bridge` kini menampilkan hasil pindai terakhir.
+
+## Perubahan 0.2.2
+- Hanya mengunggah texel yang benar-benar berubah; tick tanpa perubahan tidak memanggil fungsi GL sama sekali (sebelumnya 1 baris data diunggah tiap tick). Tujuannya mengurangi campur tangan terhadap status GL milik Minecraft/Iris.
+- Verifikasi tekstur: cek murah (glIsTexture) tiap ~5 detik, cek penuh (ukuran + format) tiap ~30 detik.

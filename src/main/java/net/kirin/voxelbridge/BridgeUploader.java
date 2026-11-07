@@ -72,7 +72,11 @@ public final class BridgeUploader {
                 scanStep();
                 if (ids.isEmpty()) return;
             }
-            if (tickCount % 100 == 0) verify();
+            if (tickCount % 100 == 0) {
+                ids.removeIf(id -> !GL11C.glIsTexture(id));            // murah: tanpa bind
+                if (tickCount % 600 == 0) verify();                   // penuh: ukuran + format
+                if (ids.isEmpty()) { scanCursor = 1; cooldown = 0; cur = new ScanResult(); }
+            }
             if (ids.isEmpty()) return;
 
             if (needFull) {
@@ -202,10 +206,12 @@ public final class BridgeUploader {
 
     private void putTexel(int addr, int r, int g, int b, int a) {
         int o = addr * 4;
-        dataBuf.put(o,     (byte) r);
-        dataBuf.put(o + 1, (byte) g);
-        dataBuf.put(o + 2, (byte) b);
-        dataBuf.put(o + 3, (byte) a);
+        byte br = (byte) r, bg = (byte) g, bb = (byte) b, ba = (byte) a;
+        if (dataBuf.get(o) == br && dataBuf.get(o + 1) == bg && dataBuf.get(o + 2) == bb && dataBuf.get(o + 3) == ba) return;   // tidak berubah: jangan unggah
+        dataBuf.put(o,     br);
+        dataBuf.put(o + 1, bg);
+        dataBuf.put(o + 2, bb);
+        dataBuf.put(o + 3, ba);
         rowDirty[addr / BridgeLayout.W] = true;
     }
 
@@ -278,6 +284,10 @@ public final class BridgeUploader {
         for (int u = 0; u < VoxelWorld.UNITS_TOTAL && units.size() < cap; u++) {
             if (world.isDirty(u)) units.add(u);
         }
+
+        boolean anyRow = false;
+        for (boolean d : rowDirty) if (d) { anyRow = true; break; }
+        if (units.isEmpty() && !anyRow) return;     // tick diam: tidak menyentuh status GL sama sekali
 
         int prevBinding = GL11C.glGetInteger(GL11C.GL_TEXTURE_BINDING_2D);
         int prevRow = GL11C.glGetInteger(GL11C.GL_UNPACK_ROW_LENGTH);
