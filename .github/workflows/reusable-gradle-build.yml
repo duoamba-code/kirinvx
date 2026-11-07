@@ -1,0 +1,103 @@
+# Workflow yang bisa dipakai ulang (workflow_call) untuk membangun proyek Gradle apa pun (mod Fabric, Forge, plugin, dll.) dan mengunggah jar-nya.
+# Dari repo lain:
+#   jobs:
+#     build:
+#       uses: USER/REPO/.github/workflows/reusable-gradle-build.yml@main
+#       with:
+#         java-version: '21'
+#         gradle-args: 'build --no-daemon'
+name: Reusable Gradle build
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Versi JDK (Temurin)
+        type: string
+        default: '21'
+      gradle-args:
+        description: Argumen untuk Gradle
+        type: string
+        default: 'build --no-daemon'
+      working-directory:
+        description: Folder proyek (tempat build.gradle), relatif terhadap akar repo
+        type: string
+        default: '.'
+      gradle-version:
+        description: Dipakai HANYA bila proyek tidak punya gradlew. Kosong = wajib ada gradlew.
+        type: string
+        default: ''
+      jar-dir:
+        description: Folder keluaran jar, relatif terhadap working-directory
+        type: string
+        default: 'build/libs'
+      exclude-patterns:
+        description: Pola nama jar yang dibuang (dipisah spasi)
+        type: string
+        default: '*-sources.jar *-dev.jar *-javadoc.jar'
+      artifact-name:
+        description: Nama artifact yang diunggah
+        type: string
+        default: 'jar'
+      retention-days:
+        type: number
+        default: 30
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java-version }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ inputs.gradle-version }}
+
+      - name: Bangun
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew ${{ inputs.gradle-args }}
+          elif [ -n "${{ inputs.gradle-version }}" ]; then
+            gradle ${{ inputs.gradle-args }}
+          else
+            echo "::error::Tidak ada gradlew di ${{ inputs.working-directory }}. Salin gradlew + folder gradle/wrapper dari template Fabric, atau isi input gradle-version."
+            exit 1
+          fi
+
+      - name: Kumpulkan jar
+        run: |
+          mkdir -p dist
+          args=""
+          for p in ${{ inputs.exclude-patterns }}; do args="$args ! -name $p"; done
+          find "${{ inputs.jar-dir }}" -maxdepth 1 -name '*.jar' $args -exec cp {} dist/ \;
+          ls -l dist
+          test -n "$(ls -A dist)" || { echo "::error::Tidak ada jar di ${{ inputs.jar-dir }}"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.working-directory }}/dist/*.jar
+          retention-days: ${{ inputs.retention-days }}
+
+      - name: Unggah laporan bila gagal
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laporan-build
+          path: |
+            ${{ inputs.working-directory }}/build/reports
+            ${{ inputs.working-directory }}/**/hs_err_pid*.log
+          if-no-files-found: ignore

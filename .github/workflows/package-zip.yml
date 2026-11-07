@@ -1,0 +1,28 @@
+# Contoh workflow kedua (tanpa Gradle): mengemas folder apa pun menjadi zip. Berguna untuk shader pack / resource pack.
+# Jalankan manual: tab Actions -> Package zip -> Run workflow, isi nama folder.
+name: Package zip
+
+on:
+  workflow_dispatch:
+    inputs:
+      folder:
+        description: Folder yang dikemas (relatif terhadap akar repo)
+        default: 'shaderpack'
+      name:
+        description: Nama zip
+        default: 'pack'
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zip
+        run: |
+          test -d "${{ inputs.folder }}" || { echo "::error::Folder ${{ inputs.folder }} tidak ada"; exit 1; }
+          (cd "${{ inputs.folder }}" && zip -qr "$GITHUB_WORKSPACE/${{ inputs.name }}.zip" .)
+          ls -l "${{ inputs.name }}.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.name }}
+          path: ${{ inputs.name }}.zip

@@ -1,0 +1,27 @@
+# Membangun jar tiap push / pull request, atau manual (tab Actions -> Build -> Run workflow) dengan opsi yang bisa diubah.
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      java-version:
+        description: Versi JDK
+        default: '21'
+      gradle-args:
+        description: Argumen Gradle
+        default: 'build --no-daemon'
+      gradle-version:
+        description: Versi Gradle bila tidak ada gradlew (kosongkan bila ada)
+        default: ''
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-gradle-build.yml
+    with:
+      java-version: ${{ inputs.java-version || '21' }}
+      gradle-args: ${{ inputs.gradle-args || 'build --no-daemon' }}
+      gradle-version: ${{ inputs.gradle-version || '9.2.1' }}
+      artifact-name: kirinvx-jar
