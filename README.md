@@ -1,4 +1,4 @@
-# Kirin Voxel Bridge, tahap 2 (Fabric 1.21.11, klien saja)
+# Kirin Voxel Bridge 0.2.1, tahap 2 (Fabric 1.21.11, klien saja)
 
 BELUM DIKOMPILASI atau DIJALANKAN oleh penulisnya (tidak ada JDK/Gradle/Minecraft/GPU di lingkungan pembuatan). Bila ada error, kirim teksnya apa adanya.
 
@@ -44,3 +44,10 @@ Perintah: `/kirinvx` (statistik), `/kirinvx bridge` (status unggahan), `/kirinvx
 ## Membangun
 Sama seperti tahap 1: buat proyek dari https://fabricmc.net/develop/template (1.21.11, Mojang mappings), timpa `src/main/java/net/kirin/voxelbridge/*` dan
 `src/main/resources/fabric.mod.json`, lalu `./gradlew build`.
+
+## Perubahan 0.2.1
+- Rentang pindai tekstur GL 4096 -> 32768 id; id yang bukan tekstur 2D diingat dan tidak di-bind ulang (menghilangkan pesan `GL_INVALID_OPERATION ... already bound to another target` yang berulang tiap ~11 detik di log).
+- Format tekstur RGBA8 atau RGBA (tak berukuran) diterima.
+- `/kirinvx bridge find`: pindai SINKRON sekarang dan cetak ringkasan (jumlah tekstur, id tertinggi, tekstur berukuran mirip).
+- `/kirinvx bridge test`: uji mandiri sisi mod tanpa Iris (buat tekstur sendiri, unggah, baca balik, cek header dan isi unit).
+- `/kirinvx bridge` kini menampilkan hasil pindai terakhir.

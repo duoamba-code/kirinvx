@@ -39,8 +39,15 @@ public final class KirinCommands {
             .then(ClientCommandManager.literal("bridge")
                 .executes(ctx -> bridgeStatus(ctx.getSource()))
                 .then(ClientCommandManager.literal("find").executes(ctx -> {
-                    KirinVoxelBridge.BRIDGE.forceFind();
-                    ctx.getSource().sendFeedback(Component.literal("[kirinvx] mencari tekstur vxbridge dari awal."));
+                    for (String line : KirinVoxelBridge.BRIDGE.scanNow()) {
+                        ctx.getSource().sendFeedback(Component.literal("[kirinvx] " + line));
+                    }
+                    return 1;
+                }))
+                .then(ClientCommandManager.literal("test").executes(ctx -> {
+                    for (String line : KirinVoxelBridge.BRIDGE.selfTest(KirinVoxelBridge.WORLD)) {
+                        ctx.getSource().sendFeedback(Component.literal("[kirinvx] " + line));
+                    }
                     return 1;
                 }))
                 .then(ClientCommandManager.literal("toggle").executes(ctx -> {
